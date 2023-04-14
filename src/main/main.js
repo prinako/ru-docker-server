@@ -62,37 +62,60 @@ router.get("/api", async (req, res) => {
 //   });
 // });
 
-router.post("/update", async (req, res) => {
-  //for today date
-  const date = new Date();
-  const toDayDate = `${date.getDate()}-0${
-    date.getMonth() + 1
-  }-${date.getFullYear()}`;
+// router.post("/update", async (req, res) => {
+//   //for today date
+//   const date = new Date();
+//   const toDayDate = `${date.getDate()}-0${
+//     date.getMonth() + 1
+//   }-${date.getFullYear()}`;
 
-  const cardapioDeHoje = await findCardapioByDate(toDayDate, (e) => e);
-//  console.log(cardapioDeHoje);
+//   const cardapioDeHoje = await findCardapioByDate(toDayDate, (e) => e);
+//   //  console.log(cardapioDeHoje);
 
-  await update(async (callback) => {
-    await isItNeedToNotify(cardapioDeHoje, toDayDate, (next) => {
-      //console.log(next);
-      notifyUserCardapioDeHojeMudou({
-        almoco: next.almoco,
-        jantar: next.jantar,
-        nome: next.nomeDaRefei,
-      });
-    });
-    //console.log(callback);
-  });
-  res.send("ok");
+//   await update(async (callback) => {
+//     await isItNeedToNotify(cardapioDeHoje, toDayDate, (next) => {
+//       //console.log(next);
+//       notifyUserCardapioDeHojeMudou({
+//         almoco: next.almoco,
+//         jantar: next.jantar,
+//         nome: next.nomeDaRefei,
+//       });
+//     });
+//     //console.log(callback);
+//   });
+//   res.send("ok");
+// });
+
+async function update() {
+console.log("up");
+
+const date = new Date();
+
+const toDayDate = `${date.getDate()}-0${
+  date.getMonth() + 1
+}-${date.getFullYear()}`;
+
+const cardapioDeHoje = await findCardapioByDate(toDayDate, (e) => e);
+
+await getAllCardapio(async (next) => {
+  await updateCardapio(next);
 });
 
-async function update(callback) {
-  await getAllCardapio(async (next) => {
-    await updateCardapio(next, (e) => {
-      //console.log(e);
-    });
+//  console.log(cardapioDeHoje);
+
+await isItNeedToNotify({ cardapioDeHoje, toDayDate }, async (next) => {
+  //console.log(next);
+  await notifyUserCardapioDeHojeMudou({
+    almoco: next.almoco,
+    jantar: next.jantar,
+    nome: next.nomeDaRefei,
   });
-  return callback();
+
+  console.log(next);
+});
+  //console.log(callback);
+
+  return;
 }
 
 function main() {
@@ -104,4 +127,4 @@ function main() {
   return;
 }
 
-module.exports = { main, router };
+module.exports = { main, router, update };

@@ -52,7 +52,7 @@ async function findCardapioByDate(data, next) {
   return next(cardapio);
 }
 
-async function updateCardapio(dados, next) {
+async function updateCardapio(dados) {
   const toUpdate = {
     dia: dados.dia[0],
     data: dados.dia[1],
@@ -82,18 +82,18 @@ async function updateCardapio(dados, next) {
     },
   };
   // console.log(toUpdate);
-  await Cardapio.findOneAndUpdate(
-    { data: dados.dia[1] },
-    toUpdate,
-    { upsert: true },
-    (err, duc) => {
+  await Cardapio.findOneAndUpdate({ data: dados.dia[1] }, toUpdate, {
+    upsert: true,
+  })
+    .then()
+    .catch((err, duc) => {
       if (err) {
         console.log(err);
         return false;
       }
       return true;
-    }
-  ).clone();
+    });
+  // .clone();
   return;
   //return next(duc);
 }

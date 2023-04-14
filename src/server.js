@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const cron = require('node-cron');
 // const helmet = require("helmet");
 
 const port = process.env.PORT || 5500;
@@ -31,17 +32,17 @@ const { main, drop, router, update } = require("./main/main.js");
 
 main();
 
-// cron.schedule(
-//   "* 1 * * *",
-//   () => {
-//     console.log("hi");
-//     update();
-//   },
-//   {
-//     scheduled: true,
-//     timezone: "America/Sao_Paulo",
-//   }
-// );
+cron.schedule(
+  "*/10 * * * * *",
+  async () => {
+    console.log("hi");
+    await update();
+  },
+  {
+    scheduled: true,
+    timezone: "America/Sao_Paulo",
+  }
+);
 
 // cron.schedule(
 //   "0 23 * * 0",
