@@ -1,7 +1,7 @@
 const { User, Cardapio, Reclama, Feedback, UsersTokens } = require("./schema");
 
-async function postCardapio(dados, next) {
-  const novoCadapio = new Cardapio({
+async function formatCardapioFroDatabase(dados, next){
+  const novoCadapio = {
     dia: dados.dia[0],
     data: dados.dia[1],
     amoco: {
@@ -28,18 +28,69 @@ async function postCardapio(dados, next) {
       },
       vegetariano2: dados.jantar[2],
     },
-  });
-
-  await novoCadapio
-    .save()
-    .then((resolute) => next(resolute))
-    .catch((err) => console.error(err.keyValue));
-  // return next(resolute);
+  }
+  return next(novoCadapio);
 }
 
-async function todosOsReclameAqui(next) {
-  const rs = await Reclama.find((e, d) => d).clone();
-  return next(rs);
+async function postCardapio(dados, next) {
+  formatCardapioFroDatabase(dados, async (novoCadapio)=>{
+    const d =  new Cardapio(novoCadapio);
+    await d
+      .save()
+      .then((resolute) => next(resolute))
+      .catch((err) => console.error(err.keyValue));
+    
+  });
+}
+
+async function updateCardapio(dados) {
+  formatCardapioFroDatabase(dados, async (novoCadapio)=>{
+
+    await Cardapio.findOneAndUpdate({ data: dados.dia[1] }, novoCadapio, {
+      upsert: true,
+    })
+      .then()
+      .catch((err, duc) => {
+        if (err) {
+          console.log(err);
+          return false;
+        }
+        return true;
+      });
+    // .clone();
+    return;
+  })
+
+  // const toUpdate = {
+  //   dia: dados.dia[0],
+  //   data: dados.dia[1],
+  //   amoco: {
+  //     refeicao: "ALMOÇO",
+  //     nomeDaRefei: dados.almoco[0],
+  //     ingredintes: {
+  //       amo1: dados.almoco[3],
+  //       amo2: dados.almoco[4],
+  //       amo3: dados.almoco[5],
+  //       amo4: dados.almoco[6],
+  //       amo5: dados.almoco[7],
+  //     },
+  //     vegetariano1: dados.almoco[2],
+  //   },
+  //   jantar: {
+  //     refeicao: "JANTAR",
+  //     nomeDaRefei: dados.jantar[0],
+  //     ingredintes: {
+  //       jan1: dados.jantar[3],
+  //       jan2: dados.jantar[4],
+  //       jan3: dados.jantar[5],
+  //       jan4: dados.jantar[6],
+  //       jan5: dados.jantar[7],
+  //     },
+  //     vegetariano2: dados.jantar[2],
+  //   },
+  // };
+  // console.log(toUpdate);
+  //return next(duc);
 }
 
 async function todosOsCardpio(next) {
@@ -52,70 +103,6 @@ async function findCardapioByDate(data, next) {
   return next(cardapio);
 }
 
-async function updateCardapio(dados) {
-  const toUpdate = {
-    dia: dados.dia[0],
-    data: dados.dia[1],
-    amoco: {
-      refeicao: "ALMOÇO",
-      nomeDaRefei: dados.almoco[0],
-      ingredintes: {
-        amo1: dados.almoco[3],
-        amo2: dados.almoco[4],
-        amo3: dados.almoco[5],
-        amo4: dados.almoco[6],
-        amo5: dados.almoco[7],
-      },
-      vegetariano1: dados.almoco[2],
-    },
-    jantar: {
-      refeicao: "JANTAR",
-      nomeDaRefei: dados.jantar[0],
-      ingredintes: {
-        jan1: dados.jantar[3],
-        jan2: dados.jantar[4],
-        jan3: dados.jantar[5],
-        jan4: dados.jantar[6],
-        jan5: dados.jantar[7],
-      },
-      vegetariano2: dados.jantar[2],
-    },
-  };
-  // console.log(toUpdate);
-  await Cardapio.findOneAndUpdate({ data: dados.dia[1] }, toUpdate, {
-    upsert: true,
-  })
-    .then()
-    .catch((err, duc) => {
-      if (err) {
-        console.log(err);
-        return false;
-      }
-      return true;
-    });
-  // .clone();
-  return;
-  //return next(duc);
-}
-
-async function postUsersTokens(req, next) {
-  const token = req.body;
-  const isOkToInsect = await UsersTokens.findOne(token);
-
-  if (isOkToInsect == null) {
-    const isToken = new UsersTokens(token);
-    await isToken.save((err, duc) => {
-      if (err) {
-        return next(false);
-      } else {
-        // console.log(duc);
-        return next(true);
-      }
-    });
-  }
-  return next("exiting");
-}
-
 async function getAllUsersTokens(next) {
   allTokens = [];
   const rs = await UsersTokens.find().clone();
@@ -124,71 +111,105 @@ async function getAllUsersTokens(next) {
   return next(allTokens);
 }
 
-async function crioReclamaAqui(req, res) {
-  const { nome, email, curso, setor, msg } = req.body;
-  const newReclamaAqui = new Reclama({
-    nome: nome,
-    email: email,
-    curso: curso,
-    setor: setor,
-    msg: msg,
-  });
-
-  try {
-    await newReclamaAqui.save().then((e) => {
-      return res.status(200).json({ msy: "ok" });
-    });
-  } catch (err) {
-    return res.status(404).json({ msy: "ok" });
-  }
-}
-
 async function dropCollection(next) {
   // verify collection if new cardápio has ben added or not.
   const toBeVerified = await todosOsCardpio((e) => e);
-  const isToBeDrop = toBeVerified.length;
-
+  // const isToBeDrop = toBeVerified.length;
   // console.log(isToBeDrop);
 
-  if (isToBeDrop > 6) {
-    // notify all users
-    //  await novoCardapioDaSemana();
-    // drop collection
-    await Cardapio.collection
-      .drop()
-      .then((e) => next(true))
-      .catch((err) => console.error(err));
-  } else {
-    return next(false);
-  }
-}
-
-async function crioFeedback(req, res) {
-  const { nome, email, msg } = req.body;
-  const newFeedback = new Feedback({
-    nome: nome,
-    email: email,
-    msg: msg,
-  });
-
-  try {
-    await newFeedback.save().then((e) => {
-      return res.status(200).json({ msy: "ok" });
+  await Cardapio.collection
+    .drop()
+    .then((e) => next(true))
+    .catch((err) => {
+      console.error(err);
+      return next(false);
     });
-  } catch (err) {
-    return res.status(404).json({ msy: "ok" });
-  }
+
+  // if (isToBeDrop > 5) {
+  //   // notify all users
+  //   //  await novoCardapioDaSemana();
+  //   // drop collection
+  // } else {
+  // }
 }
+
+async function getCardapioFormatToVerify(dados, next){
+  await formatCardapioFroDatabase(dados, (cardapioFormatado)=>{
+    return next(cardapioFormatado);
+  });
+}
+
+//   const rs = await Reclama.find((e, d) => d).clone();
+//   return next(rs);
+// }
+
+// async function postUsersTokens(req, next) {
+//   const token = req.body;
+//   const isOkToInsect = await UsersTokens.findOne(token);
+
+//   if (isOkToInsect == null) {
+//     const isToken = new UsersTokens(token);
+//     await isToken.save((err, duc) => {
+//       if (err) {
+//         return next(false);
+//       } else {
+//         // console.log(duc);
+//         return next(true);
+//       }
+//     });
+//   }
+//   return next("exiting");
+// }
+
+
+// async function crioReclamaAqui(req, res) {
+//   const { nome, email, curso, setor, msg } = req.body;
+//   const newReclamaAqui = new Reclama({
+//     nome: nome,
+//     email: email,
+//     curso: curso,
+//     setor: setor,
+//     msg: msg,
+//   });
+
+//   try {
+//     await newReclamaAqui.save().then((e) => {
+//       return res.status(200).json({ msy: "ok" });
+//     });
+//   } catch (err) {
+//     return res.status(404).json({ msy: "ok" });
+//   }
+// }
+
+
+// async function crioFeedback(req, res) {
+//   const { nome, email, msg } = req.body;
+//   const newFeedback = new Feedback({
+//     nome: nome,
+//     email: email,
+//     msg: msg,
+//   });
+
+//   try {
+//     await newFeedback.save().then((e) => {
+//       return res.status(200).json({ msy: "ok" });
+//     });
+//   } catch (err) {
+//     return res.status(404).json({ msy: "ok" });
+//   }
+// }
 
 module.exports = {
   postCardapio,
-  todosOsReclameAqui,
+  // todosOsReclameAqui,
   todosOsCardpio,
   findCardapioByDate,
-  crioReclamaAqui,
-  crioFeedback,
+  // crioReclamaAqui,
+  // crioFeedback,
   updateCardapio,
   dropCollection,
-  postUsersTokens,
+  // postUsersTokens,
   getAllUsersTokens,
+  formatCardapioFroDatabase,
+  getCardapioFormatToVerify,
 };

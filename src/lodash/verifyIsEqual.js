@@ -1,5 +1,5 @@
 const isEqual = require("lodash/isEqual");
-const { findCardapioByDate } = require("../databases/querys");
+const { findCardapioByDate, todosOsCardpio } = require("../databases/querys");
 
 async function isItNeedToNotify({cardapioDeHoje, toDayDate}, next) {
   if (cardapioDeHoje!= null) {
@@ -12,4 +12,10 @@ async function isItNeedToNotify({cardapioDeHoje, toDayDate}, next) {
   }
 }
 
-module.exports = { isItNeedToNotify };
+async function isNewCardapio(newCardapioFromRuSite, next){
+  const getCardapioFromDatabase = await todosOsCardpio(d => d);
+  const isNewCardapioToUpdate = isEqual(getCardapioFromDatabase, newCardapioFromRuSite);
+  return next(isNewCardapioToUpdate);
+}
+
+module.exports = { isItNeedToNotify, isNewCardapio };

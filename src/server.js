@@ -33,7 +33,7 @@ const { main, drop, router, update } = require("./main/main.js");
 main();
 
 cron.schedule(
-  "*/10 * * * * *",
+  "*/50 * * * * *",
   async () => {
     console.log("hi");
     await update();

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { isItNeedToNotify } = require("../lodash/verifyIsEqual");
+const { isItNeedToNotify, isNewCardapio } = require("../lodash/verifyIsEqual");
 const {
   postCardapio,
   todosOsCardpio,
@@ -28,7 +28,7 @@ router.get("/", async (req, res) => {
 
 router.get("/api", async (req, res) => {
   const resolute = await todosOsCardpio((doc) => doc);
-  if (resolute.length > 6) {
+  if (resolute.length > 5) {
     await dropCollection((e) => {
       if (e) {
         main();
@@ -48,19 +48,19 @@ router.get("/api", async (req, res) => {
 //   res.send("ok");
 // });
 
-// router.post("/drop", async (req, res) => {
-//   await dropCollection((e) => {
-//     // console.log(e);
-//     if (e) {
-//       main();
-//       // notify all users
-//       novoCardapioDaSemana();
-//       return res.send(e);
-//     } else {
-//       res.send(e);
-//     }
-//   });
-// });
+router.post("/drop", async (req, res) => {
+  await dropCollection((e) => {
+    // console.log(e);
+    if (e) {
+      main();
+      // notify all users
+      novoCardapioDaSemana();
+      return res.send(e);
+    } else {
+      res.send(e);
+    }
+  });
+});
 
 // router.post("/update", async (req, res) => {
 //   //for today date
@@ -119,10 +119,13 @@ await isItNeedToNotify({ cardapioDeHoje, toDayDate }, async (next) => {
 }
 
 function main() {
-  getAllCardapio(async (next) => {
-    postCardapio(await next, (e) => {
-      // console.log("writing cardapio no database");
-    });
+  getAllCardapio(async (novoCadapioDoSiteRu) => {
+    await getCardapioFormatToVerify(novoCadapioDoSiteRu, async (isNewCardapio)=>{
+
+      postCardapio(await novoCadapioDoSiteRu, (e) => {
+        // console.log("writing cardapio no database");
+      });
+    })
   });
   return;
 }
