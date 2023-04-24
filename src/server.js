@@ -30,13 +30,13 @@ const { main, drop, router, update } = require("./main/main.js");
 // const {notifyUserCardapioDeHojeMudou} = require("./firebase/push-notification");
 // notifyUserCardapioDeHojeMudou();
 
-main();
 
 cron.schedule(
-  "*/50 * * * * *",
+  "*/10 * * * * *",
   async () => {
-    console.log("hi");
-    await update();
+    // console.log("hi");
+    // await update();
+    await main();
   },
   {
     scheduled: true,

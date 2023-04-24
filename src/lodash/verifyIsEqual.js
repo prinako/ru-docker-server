@@ -1,8 +1,9 @@
 const isEqual = require("lodash/isEqual");
-const { findCardapioByDate, todosOsCardpio } = require("../databases/querys");
+const toRemove = require("lodash/dropWhile");
+const { findCardapioByDate, todosOsCardapio } = require("../databases/querys");
 
-async function isItNeedToNotify({cardapioDeHoje, toDayDate}, next) {
-  if (cardapioDeHoje!= null) {
+async function isItNeedToNotify({ cardapioDeHoje, toDayDate }, next) {
+  if (cardapioDeHoje != null) {
     const b = await findCardapioByDate(toDayDate, (e) => e);
     const almoco = isEqual(cardapioDeHoje.amoco, b.amoco);
     const jantar = isEqual(cardapioDeHoje.jantar, b.jantar);
@@ -12,10 +13,19 @@ async function isItNeedToNotify({cardapioDeHoje, toDayDate}, next) {
   }
 }
 
-async function isNewCardapio(newCardapioFromRuSite, next){
-  const getCardapioFromDatabase = await todosOsCardpio(d => d);
-  const isNewCardapioToUpdate = isEqual(getCardapioFromDatabase, newCardapioFromRuSite);
-  return next(isNewCardapioToUpdate);
+async function verifyIsNewCardapio({ cardapioFormatado, index }, next) {
+  const fromDatabes = await todosOsCardapio((d) => d[index]);
+  if (fromDatabes) {
+    const getCardapioFromDatabase = toRemove([fromDatabes], [!'_id']);
+    console.log(getCardapioFromDatabase);
+    const isNewCardapioToUpdate = isEqual(
+      getCardapioFromDatabase,
+      cardapioFormatado
+    );
+    return next(isNewCardapioToUpdate);
+  // } else {
+  //   return next(false);
+  }
 }
 
-module.exports = { isItNeedToNotify, isNewCardapio };
+module.exports = { isItNeedToNotify, verifyIsNewCardapio };

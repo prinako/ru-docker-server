@@ -1,6 +1,6 @@
 const { User, Cardapio, Reclama, Feedback, UsersTokens } = require("./schema");
 
-async function formatCardapioFroDatabase(dados, next){
+async function formatCardapioFroDatabase(dados, next) {
   const novoCadapio = {
     dia: dados.dia[0],
     data: dados.dia[1],
@@ -28,24 +28,29 @@ async function formatCardapioFroDatabase(dados, next){
       },
       vegetariano2: dados.jantar[2],
     },
-  }
+  };
   return next(novoCadapio);
 }
 
 async function postCardapio(dados, next) {
-  formatCardapioFroDatabase(dados, async (novoCadapio)=>{
-    const d =  new Cardapio(novoCadapio);
+  formatCardapioFroDatabase(dados, async (novoCadapio) => {
+    const d = new Cardapio(novoCadapio);
     await d
       .save()
-      .then((resolute) => next(resolute))
-      .catch((err) => console.error(err.keyValue));
-    
+      .then(async (resolute) => {
+        await connectMongoDBserver(d);
+        next(resolute);
+      })
+      .catch((err) => next(err.keyValue));
   });
 }
 
-async function updateCardapio(dados) {
-  formatCardapioFroDatabase(dados, async (novoCadapio)=>{
+async function connectMongoDBserver(dados) {
+  console.log(`we wii connect soon: ` + dados);
+}
 
+async function updateCardapio(dados) {
+  formatCardapioFroDatabase(dados, async (novoCadapio) => {
     await Cardapio.findOneAndUpdate({ data: dados.dia[1] }, novoCadapio, {
       upsert: true,
     })
@@ -59,8 +64,9 @@ async function updateCardapio(dados) {
       });
     // .clone();
     return;
-  })
+  });
 
+  
   // const toUpdate = {
   //   dia: dados.dia[0],
   //   data: dados.dia[1],
@@ -93,7 +99,7 @@ async function updateCardapio(dados) {
   //return next(duc);
 }
 
-async function todosOsCardpio(next) {
+async function todosOsCardapio(next) {
   const rs = await Cardapio.find().clone();
   return next(rs);
 }
@@ -133,8 +139,8 @@ async function dropCollection(next) {
   // }
 }
 
-async function getCardapioFormatToVerify(dados, next){
-  await formatCardapioFroDatabase(dados, (cardapioFormatado)=>{
+async function getCardapioFormatToVerify(dados, next) {
+  await formatCardapioFroDatabase(dados, (cardapioFormatado) => {
     return next(cardapioFormatado);
   });
 }
@@ -161,7 +167,6 @@ async function getCardapioFormatToVerify(dados, next){
 //   return next("exiting");
 // }
 
-
 // async function crioReclamaAqui(req, res) {
 //   const { nome, email, curso, setor, msg } = req.body;
 //   const newReclamaAqui = new Reclama({
@@ -180,7 +185,6 @@ async function getCardapioFormatToVerify(dados, next){
 //     return res.status(404).json({ msy: "ok" });
 //   }
 // }
-
 
 // async function crioFeedback(req, res) {
 //   const { nome, email, msg } = req.body;
@@ -202,7 +206,7 @@ async function getCardapioFormatToVerify(dados, next){
 module.exports = {
   postCardapio,
   // todosOsReclameAqui,
-  todosOsCardpio,
+  todosOsCardapio,
   findCardapioByDate,
   // crioReclamaAqui,
   // crioFeedback,

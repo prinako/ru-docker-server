@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const { isItNeedToNotify, isNewCardapio } = require("../lodash/verifyIsEqual");
+const {
+  isItNeedToNotify,
+  verifyIsNewCardapio,
+} = require("../lodash/verifyIsEqual");
 const {
   postCardapio,
   todosOsCardpio,
@@ -9,6 +12,7 @@ const {
   updateCardapio,
   findCardapioByDate,
   postUsersTokens,
+  getCardapioFormatToVerify,
 } = require("../databases/querys");
 
 const { getAllCardapio } = require("../cardapio/getCardapio");
@@ -87,45 +91,42 @@ router.post("/drop", async (req, res) => {
 // });
 
 async function update() {
-console.log("up");
+  console.log("up");
 
-const date = new Date();
+  const date = new Date();
 
-const toDayDate = `${date.getDate()}-0${
-  date.getMonth() + 1
-}-${date.getFullYear()}`;
+  const toDayDate = `${date.getDate()}-0${
+    date.getMonth() + 1
+  }-${date.getFullYear()}`;
 
-const cardapioDeHoje = await findCardapioByDate(toDayDate, (e) => e);
+  const cardapioDeHoje = await findCardapioByDate(toDayDate, (e) => e);
 
-await getAllCardapio(async (next) => {
-  await updateCardapio(next);
-});
-
-//  console.log(cardapioDeHoje);
-
-await isItNeedToNotify({ cardapioDeHoje, toDayDate }, async (next) => {
-  //console.log(next);
-  await notifyUserCardapioDeHojeMudou({
-    almoco: next.almoco,
-    jantar: next.jantar,
-    nome: next.nomeDaRefei,
+  await getAllCardapio(async (next) => {
+    await updateCardapio(next);
   });
 
-  console.log(next);
-});
+  //  console.log(cardapioDeHoje);
+
+  await isItNeedToNotify({ cardapioDeHoje, toDayDate }, async (next) => {
+    //console.log(next);
+    await notifyUserCardapioDeHojeMudou({
+      almoco: next.almoco,
+      jantar: next.jantar,
+      nome: next.nomeDaRefei,
+    });
+
+    console.log(next);
+  });
   //console.log(callback);
 
   return;
 }
 
-function main() {
-  getAllCardapio(async (novoCadapioDoSiteRu) => {
-    await getCardapioFormatToVerify(novoCadapioDoSiteRu, async (isNewCardapio)=>{
-
-      postCardapio(await novoCadapioDoSiteRu, (e) => {
-        // console.log("writing cardapio no database");
-      });
-    })
+async function main() {
+  await getAllCardapio(async (novoCardapioDoSiteRu) => {
+    await postCardapio(novoCardapioDoSiteRu, (e) => {
+      console.log(e);
+    });
   });
   return;
 }

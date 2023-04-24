@@ -144,10 +144,11 @@ const cadapioSchema = new Schema(
         type: String,
       },
     },
+  },
+  {
+    versionKey: false,
+    // timestamps: true,
   }
-  // {
-  //   timestamps: true,
-  // }
 );
 
 const postUsersTokens = new Schema(
